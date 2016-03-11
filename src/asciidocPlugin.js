@@ -5,10 +5,13 @@ import slugify from 'hubpress-core-slugify'//'./utils/slugify'
 
 const asciidoctor = asciiDoctorLib();
 const opal = asciidoctor.Opal;
-const processor = asciidoctor.Asciidoctor(false);
-const options = opal.hash2(
-  ['safe', 'attributes'],
-{safe: 'unsafe', attributes: ['showtitle!','imagesdir=/images', 'icons=font']});
+const processor = asciidoctor.Asciidoctor();
+const options = opal.hash({
+  doctype: 'article',
+  backend: 'html5',
+  safe: 'safe',
+  attributes: ['showtitle!','imagesdir=/images', 'icons=font']
+});
 
 function splitMore(asciidocContent) {
   let parts = asciidocContent.split('pass::[more]');
@@ -23,7 +26,7 @@ function convert (asciidocContent) {
   let excerpt = processor.$load(parts.excerpt, options);
   let doc = processor.$load(parts.full, options);
   let value = {
-    attributes: doc.attributes,
+    attributes: _.pick(doc.attributes, ['smap']),
     excerpt: excerpt.$convert(),
     html: doc.$convert()
   }
@@ -42,9 +45,9 @@ export function asciidocPlugin (hubpress) {
 
       let original = _.pick(_post, 'attributes', 'author', 'html', 'tags', 'content', 'name', 'path', 'sha');
 
-      _post.title = original.title = original.attributes.map['doctitle'] ;
-      _post.image = original.image = original.attributes.map['hp-image'] ;
-      _post.tags = original.tags = original.attributes.map['hp-tags'] && original.attributes.map['hp-tags'].split(',') ;
+      _post.title = original.title = original.attributes.smap['doctitle'] ;
+      _post.image = original.image = original.attributes.smap['hp-image'] ;
+      _post.tags = original.tags = original.attributes.smap['hp-tags'] && original.attributes.smap['hp-tags'].split(',') ;
       _post.url = original.url = opts.data.config.urls.getPostUrl(original.name);
 
       let _postToSave = Object.assign({}, _post, {original: original});
@@ -64,11 +67,11 @@ export function asciidocPlugin (hubpress) {
      //Object.assign(opts.data, {document: convertedContent});
     refreshedPost._id = opts.data.post._id;
     console.log('refreshedPost', refreshedPost);
-    refreshedPost.title = refreshedPost.attributes.map['doctitle'];
-    refreshedPost.image = refreshedPost.attributes.map['hp-image'] ;
-    refreshedPost.tags = refreshedPost.attributes.map['hp-tags'] && refreshedPost.attributes.map['hp-tags'].split(',');
-    refreshedPost.published_at = refreshedPost.attributes.map['published_at'] || refreshedPost.published_at || moment().format('YYYY-MM-DD');
-    let altTitle = refreshedPost.attributes.map['hp-alt-title'];
+    refreshedPost.title = refreshedPost.attributes.smap['doctitle'];
+    refreshedPost.image = refreshedPost.attributes.smap['hp-image'] ;
+    refreshedPost.tags = refreshedPost.attributes.smap['hp-tags'] && refreshedPost.attributes.smap['hp-tags'].split(',');
+    refreshedPost.published_at = refreshedPost.attributes.smap['published_at'] || refreshedPost.published_at || moment().format('YYYY-MM-DD');
+    let altTitle = refreshedPost.attributes.smap['hp-alt-title'];
     refreshedPost.name = slugify(refreshedPost.published_at + '-' + (altTitle || refreshedPost.title)) +'.adoc';
     refreshedPost.url = opts.state.application.config.urls.getPostUrl(refreshedPost.name);
 

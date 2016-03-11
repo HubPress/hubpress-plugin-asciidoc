@@ -14,7 +14,7 @@
     "lib"
   ],
   "dependencies": {
-    "asciidoctor.js": "1.5.2",
+    "asciidoctor.js": "1.5.5-1",
     "hubpress-core-slugify": "github:hubpress/hubpress-core-slugify#59d8f72",
     "lodash": "^4.5.0",
     "moment": "^2.11.2"
