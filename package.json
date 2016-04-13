@@ -16,7 +16,7 @@
     "lib"
   ],
   "dependencies": {
-    "asciidoctor.js": "1.5.5-1",
+    "asciidoctor.js": "github:anthonny/asciidoctor.js#fix-opal",
     "hubpress-core-slugify": "github:hubpress/hubpress-core-slugify#cfe920c",
     "lodash": "^4.5.0",
     "moment": "^2.11.2"

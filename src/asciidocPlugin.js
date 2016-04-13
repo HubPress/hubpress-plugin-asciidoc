@@ -3,9 +3,9 @@ import _ from 'lodash';
 import moment from 'moment';
 import slugify from 'hubpress-core-slugify';//'./utils/slugify'
 
-const asciidoctor = asciiDoctorLib();
+const asciidoctor = asciiDoctorLib(false, window.XMLHttpRequest);
 const opal = asciidoctor.Opal;
-const processor = asciidoctor.Asciidoctor();
+const processor = asciidoctor.Asciidoctor(true);
 
 function splitMore(asciidocContent) {
   let parts = asciidocContent.split('pass::[more]');
@@ -15,13 +15,16 @@ function splitMore(asciidocContent) {
   };
 }
 
-function convert (opts, asciidocContent) {
+function convert (opts, _asciidocContent) {
   const options = opal.hash({
     doctype: 'article',
     backend: 'html5',
-    safe: 'safe',
-    attributes: ['showtitle!',`imagesdir=${opts.data.config.urls.site}/images`, 'icons=font']
+    //base_dir: opts.state.application.config.urls.site,
+    safe: 'unsafe',
+    attributes: ['showtitle!', 'allow-uri-read', `imagesdir=${opts.state.application.config.urls.site}/images`, 'icons=font']
   });
+  const gistRx = /gist::([0-9]*)\[(lines=[0-9]*\.\.[0-9]*)?,?(type=([\w.]*))?,?(file=([\w.]*))?\]/g
+  const asciidocContent = _asciidocContent.replace(gistRx, '[source,$4]\n----\ninclude::https://gist.githubusercontent.com/raw/$1/$6[$2]\n----\n');
   let parts = splitMore(asciidocContent);
   let excerpt = processor.$load(parts.excerpt, options);
   let doc = processor.$load(parts.full, options);
@@ -55,7 +58,7 @@ export function asciidocPlugin (hubpress) {
       _post.title = original.title = original.attributes.smap['doctitle'] ;
       _post.image = original.image = original.attributes.smap['hp-image'] ;
       _post.tags = original.tags = extractTags(original.attributes);
-      _post.url = original.url = opts.data.config.urls.getPostUrl(original.name);
+      _post.url = original.url = opts.state.application.config.urls.getPostUrl(original.name);
 
       let _postToSave = Object.assign({}, _post, {original: original});
       _postToSave.original.published_at = _postToSave.published_at = original.name.split('-').slice(0,3).join('-');
