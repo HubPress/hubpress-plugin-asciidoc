@@ -38,7 +38,7 @@ function convert (opts, _asciidocContent) {
 
 function extractTags (attributes) {
   const tagAttribute = 'hp-tags';
-  return attributes.$$smap[tagAttribute] && attributes.$$smap[tagAttribute].split(',');
+  return attributes.$$smap[tagAttribute] && attributes.$$smap[tagAttribute].split(',').filter(v => v.trim() !== '');
 }
 
 export function asciidocPlugin (hubpress) {
