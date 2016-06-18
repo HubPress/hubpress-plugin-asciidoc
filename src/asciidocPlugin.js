@@ -29,7 +29,7 @@ function convert (opts, _asciidocContent) {
   let excerpt = processor.$load(parts.excerpt, options);
   let doc = processor.$load(parts.full, options);
   let value = {
-    attributes: _.pick(doc.attributes, ['smap']),
+    attributes: _.pick(doc.attributes, ['$$smap']),
     excerpt: excerpt.$convert(),
     html: doc.$convert()
   };
@@ -38,7 +38,7 @@ function convert (opts, _asciidocContent) {
 
 function extractTags (attributes) {
   const tagAttribute = 'hp-tags';
-  return attributes.smap[tagAttribute] && attributes.smap[tagAttribute].split(',');
+  return attributes.$$smap[tagAttribute] && attributes.$$smap[tagAttribute].split(',');
 }
 
 export function asciidocPlugin (hubpress) {
@@ -55,8 +55,8 @@ export function asciidocPlugin (hubpress) {
 
       let original = _.pick(_post, 'attributes', 'author', 'html', 'tags', 'content', 'name', 'path', 'sha');
 
-      _post.title = original.title = original.attributes.smap['doctitle'] ;
-      _post.image = original.image = original.attributes.smap['hp-image'] ;
+      _post.title = original.title = original.attributes.$$smap['doctitle'] ;
+      _post.image = original.image = original.attributes.$$smap['hp-image'] ;
       _post.tags = original.tags = extractTags(original.attributes);
       _post.url = original.url = opts.state.application.config.urls.getPostUrl(original.name);
 
@@ -77,11 +77,11 @@ export function asciidocPlugin (hubpress) {
 
     let refreshedPost = convert(opts, opts.data.post.content);
     refreshedPost._id = opts.data.post._id;
-    refreshedPost.title = refreshedPost.attributes.smap['doctitle'];
-    refreshedPost.image = refreshedPost.attributes.smap['hp-image'] ;
+    refreshedPost.title = refreshedPost.attributes.$$smap['doctitle'];
+    refreshedPost.image = refreshedPost.attributes.$$smap['hp-image'] ;
     refreshedPost.tags = extractTags(refreshedPost.attributes);
-    refreshedPost.published_at = refreshedPost.attributes.smap['published_at'] || opts.data.post.published_at || moment().format('YYYY-MM-DD');
-    let altTitle = refreshedPost.attributes.smap['hp-alt-title'];
+    refreshedPost.published_at = refreshedPost.attributes.$$smap['published_at'] || opts.data.post.published_at || moment().format('YYYY-MM-DD');
+    let altTitle = refreshedPost.attributes.$$smap['hp-alt-title'];
     refreshedPost.name = slugify(refreshedPost.published_at + '-' + (altTitle || refreshedPost.title)) +'.adoc';
     refreshedPost.url = opts.state.application.config.urls.getPostUrl(refreshedPost.name);
 
