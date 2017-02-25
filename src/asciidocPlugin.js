@@ -15,13 +15,13 @@ function splitMore(asciidocContent) {
   };
 }
 
-function convert (opts, _asciidocContent) {
+function convert (config, _asciidocContent) {
   const options = opal.hash({
     doctype: 'article',
     backend: 'html5',
     //base_dir: opts.state.application.config.urls.site,
     safe: 'unsafe',
-    attributes: ['showtitle!', 'allow-uri-read', `imagesdir=${opts.state.application.config.urls.site}/images`, 'icons=font']
+    attributes: ['showtitle!', 'allow-uri-read', `imagesdir=${config.urls.site}/images`, 'icons=font']
   });
   const gistRx = /gist::([0-9]*)\[(lines=[0-9]*\.\.[0-9]*)?,?(type=([\w.]*))?,?(file=([\w.]*))?\]/g
   const asciidocContent = _asciidocContent.replace(gistRx, '[source,$4]\n----\ninclude::https://gist.githubusercontent.com/raw/$1/$6[$2]\n----\n');
@@ -41,14 +41,15 @@ function extractTags (attributes) {
   return attributes.$$smap[tagAttribute] && attributes.$$smap[tagAttribute].split(',').filter(v => v.trim() !== '');
 }
 
-export function asciidocPlugin (hubpress) {
+export function asciidocPlugin (context) {
 
-  hubpress.on('requestRenderingDocuments', (opts) => {
-    console.info('Asciidoc Plugin - requestRenderingDocuments');
-    console.log('requestRenderingDocuments', opts);
+  context.on('hubpress:request-rendering-documents', (opts) => {
+    console.info('Asciidoc Plugin - hubpress:request-rendering-documents');
+    console.log('hubpress:request-rendering-documents', opts);
 
-    const posts = (opts.data.documents.posts || []).map((post) => {
-      const _post = Object.assign({}, post, convert(opts, post.content), {
+    const config = opts.rootState.application.config
+    const posts = (opts.nextState.posts || []).map((post) => {
+      const _post = Object.assign({}, post, convert(config, post.content), {
         content: post.content
       });
 
@@ -58,7 +59,7 @@ export function asciidocPlugin (hubpress) {
       _post.title = original.title = original.attributes.$$smap['doctitle'] ;
       _post.image = original.image = original.attributes.$$smap['hp-image'] ;
       _post.tags = original.tags = extractTags(original.attributes);
-      _post.url = original.url = opts.state.application.config.urls.getPostUrl(original.name);
+      _post.url = original.url = config.urls.getPostUrl(original.name);
 
       let _postToSave = Object.assign({}, _post, {original: original});
       _postToSave.original.published_at = _postToSave.published_at = original.name.split('-').slice(0,3).join('-');
@@ -66,28 +67,25 @@ export function asciidocPlugin (hubpress) {
       return _postToSave;
     });
 
-    const mergeDocuments = Object.assign({}, opts.data.documents, {posts});
-    const data = Object.assign({}, opts.data, {documents: mergeDocuments});
-    return Object.assign({}, opts, {data});
+    opts.nextState.posts = posts
+    return opts
   });
 
-  hubpress.on('requestRenderingPost', (opts) => {
+  context.on('requestRenderingPost', (opts) => {
     console.info('Asciidoc Plugin - requestRenderingPost');
     console.log('requestRenderingPost', opts);
+    let refreshedPost = convert(opts.rootState.application.config, opts.nextState.post.content);
+    opts.nextState.post = Object.assign({}, opts.nextState.post, refreshedPost);
 
-    let refreshedPost = convert(opts, opts.data.post.content);
-    refreshedPost._id = opts.data.post._id;
-    refreshedPost.title = refreshedPost.attributes.$$smap['doctitle'];
-    refreshedPost.image = refreshedPost.attributes.$$smap['hp-image'] ;
-    refreshedPost.tags = extractTags(refreshedPost.attributes);
-    refreshedPost.published_at = refreshedPost.attributes.$$smap['published_at'] || opts.data.post.published_at || moment().format('YYYY-MM-DD');
+    opts.nextState.post.title = refreshedPost.attributes.$$smap['doctitle'];
+    opts.nextState.post.image = refreshedPost.attributes.$$smap['hp-image'] ;
+    opts.nextState.post.tags = extractTags(refreshedPost.attributes);
+    opts.nextState.post.published_at = refreshedPost.attributes.$$smap['published_at'] || opts.nextState.post.published_at || moment().format('YYYY-MM-DD');
     let altTitle = refreshedPost.attributes.$$smap['hp-alt-title'];
-    refreshedPost.name = slugify(refreshedPost.published_at + '-' + (altTitle || refreshedPost.title)) +'.adoc';
-    refreshedPost.url = opts.state.application.config.urls.getPostUrl(refreshedPost.name);
+    opts.nextState.post.name = slugify(opts.nextState.post.published_at + '-' + (altTitle || opts.nextState.post.title)) +'.adoc';
+    opts.nextState.post.url = opts.rootState.application.config.urls.getPostUrl(opts.nextState.post.name);
 
-    const mergedPost = Object.assign({}, opts.data.post, refreshedPost);
-    const data = Object.assign({}, opts.data, {post: mergedPost});
-    return Object.assign({}, opts, {data});
+    return opts
   });
 
 }
