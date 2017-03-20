@@ -38,7 +38,7 @@ function convert (config, _asciidocContent) {
 
 function extractTags (attributes) {
   const tagAttribute = 'hp-tags';
-  return attributes.$$smap[tagAttribute] && attributes.$$smap[tagAttribute].split(',').filter(v => v.trim() !== '');
+  return attributes.$$smap[tagAttribute] && attributes.$$smap[tagAttribute].split(',').map(v => v.trim()).filter(v => v !== '');
 }
 
 export function asciidocPlugin (context) {
@@ -52,7 +52,6 @@ export function asciidocPlugin (context) {
       const _post = Object.assign({}, post, convert(config, post.content), {
         content: post.content
       });
-
 
       let original = _.pick(_post, 'attributes', 'author', 'html', 'tags', 'content', 'name', 'path', 'sha');
 
