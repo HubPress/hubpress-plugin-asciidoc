@@ -23,7 +23,7 @@ function convert (config, _asciidocContent) {
     safe: 'unsafe',
     attributes: ['showtitle!', 'allow-uri-read', `imagesdir=${config.urls.site}/images`, 'icons=font']
   });
-  const gistRx = /gist::([0-9]*)\[(lines=[0-9]*\.\.[0-9]*)?,?(type=([\w.]*))?,?(file=([\w.]*))?\]/g
+  const gistRx = /gist::([a-zA-Z0-9]*)\[(lines=[0-9]*\.\.[0-9]*)?,?(type=([\w.]*))?,?(file=([\w.]*))?\]/g
   const asciidocContent = _asciidocContent.replace(gistRx, '[source,$4]\n----\ninclude::https://gist.githubusercontent.com/raw/$1/$6[$2]\n----\n');
   let parts = splitMore(asciidocContent);
   let excerpt = processor.$load(parts.excerpt, options);
